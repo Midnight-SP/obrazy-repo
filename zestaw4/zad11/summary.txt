@@ -1,0 +1,4 @@
+h_a: kind=low-pass (smoothing), raw_sum=25.000, direction=None
+h_b: kind=sharpening / band-pass (contains negative lobes), raw_sum=1.000, direction=None
+h_c: kind=sharpening / band-pass (contains negative lobes), raw_sum=1.000, direction=NE
+h_d: kind=high-pass / edge detector (zero-sum kernel), raw_sum=0.000, direction=SW
