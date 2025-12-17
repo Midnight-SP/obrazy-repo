@@ -1,5 +1,129 @@
 # Zestaw 4
 
+## 7. Splot sygnałów 2D ⋆ (1.5 + 1.5)
+
+### Treść zadania
+
+Dane są sygnały f, h1 i h2:
+
+```
+f =
+(
+    255 255 255 255 255 255 255
+    255 255 255 255 255 255 255
+    255 255   0   0   0 255 255
+    255 255   0   0   0 255 255
+    255 255   0   0   0 255 255
+    255 255 255 255 255 255 255
+    255 255 255 255 255 255 255
+)
+
+h1 =
+(
+    1
+    −1
+    0
+)
+
+h2 =
+(
+    0
+    1
+    −1
+)
+```
+
+Proszę:
+(a) wykonać sploty f ∗ h1 i f ∗ h2. Czy oba sploty wykrywają te same krawędzie w sygnale f?
+
+(b) zinterpretować f jako obraz i wykonać oba sploty w ImageJ:
+     i. na 8 bitach,
+     ii. na 32 bitach.
+
+Z czego wynika różnica względem wyniku w części (a)?
+
+### Rozwiązania
+
+#### Część (a): Sploty w dziedzinie liczb rzeczywistych
+
+Sygnał f (7×7) z czarnym kwadratem 3×3 w środku:
+
+![signal_f](zad7/signal_f.png)
+
+```
+255 255 255 255 255 255 255
+255 255 255 255 255 255 255
+255 255   0   0   0 255 255
+255 255   0   0   0 255 255
+255 255   0   0   0 255 255
+255 255 255 255 255 255 255
+255 255 255 255 255 255 255
+```
+
+Sploty:
+
+f ∗ h1 (detekcja górnej krawędzi, h1 = [1, −1, 0]^T):
+
+![f_conv_h1](zad7/f_conv_h1.png)
+
+```
+  0   0   0   0   0   0   0
+  0   0 -255 -255 -255   0   0
+  0   0   0   0   0   0   0
+  0   0   0   0   0   0   0
+  0   0 +255 +255 +255   0   0
+  0   0   0   0   0   0   0
+  0   0   0   0   0   0   0
+```
+
+f ∗ h2 (detekcja dolnej krawędzi, h2 = [0, 1, −1]^T):
+
+![f_conv_h2](zad7/f_conv_h2.png)
+
+```
+  0   0   0   0   0   0   0
+  0   0   0   0   0   0   0
+  0   0 -255 -255 -255   0   0
+  0   0   0   0   0   0   0
+  0   0   0   0   0   0   0
+  0   0 +255 +255 +255   0   0
+  0   0   0   0   0   0   0
+```
+
+**Czy oba sploty wykrywają te same krawędzie?**
+
+Nie — h1 i h2 to **różne operatory** (przesunięte względem siebie):
+- **h1** detektuje **górną krawędź** czarnego kwadratu (przejście 255→0 w wierszu 1→2):
+  - Daje **−255** na wierszu 1 (koniec jasnego)
+  - Daje **+255** na wierszu 4 (początek jasnego po czarnym)
+  
+- **h2** detektuje **dolną krawędź** czarnego kwadratu (przejście 0→255 w wierszu 4→5):
+  - Daje **−255** na wierszu 2 (koniec czarnego)
+  - Daje **+255** na wierszu 5 (początek jasnego)
+
+Znaki są **przeciwne** — h1 i h2 to operatory z przesunięciem, więc chociaż wykrywają krawędzie, to robią to w różnych wierszach i z różnymi znakami.
+
+#### Część (b): Interpretacja różnic 8-bit vs. 32-bit w ImageJ
+
+Sploty f ∗ h1 i f ∗ h2 produkują wartości w zakresie **[−255, +255]**, które wykraczają poza standardowy zakres piksela 8-bitowego **[0, 255]**.
+
+**W ImageJ na 8 bitach:**
+- Wartości **> 255** są **cięte (clipped)** do 255
+- Wartości **< 0** są **cięte do 0**
+- Prowadzi to do **utraty informacji**: detale na krawędziach zmienią się w całkowite czarno (0) lub biel (255)
+- Wynik będzie **mniej dokładny** — przejścia zostają zaostrzane, ale dokładne wartości −255 zamieniają się na 0
+
+**W ImageJ na 32 bitach (float):**
+- **Brak clippingu** — wyniki są zachowywane bez zmian
+- Możliwe są wartości ujemne i wartości > 255
+- Umożliwia **późniejszą normalizację** (np. do zakresu [0, 255] lub [−1, 1]) zachowując wszystkie informacje
+- Wynik będzie bliski wynikom z części (a) — matematycznie dokładny
+
+**Podsumowanie różnic:**
+- Część (a): dokładne wyniki na liczbach rzeczywistych (wartości: −255, 0, +255)
+- ImageJ 8-bit: sploty z clippingiem → utrata informacji na ujemnych wartościach
+- ImageJ 32-bit: sploty bez clippingu → zachowanie całej dynamiki sygnału
+
 ## 11. Filtrowanie obrazów w ImageJ ⋆ (1 + 1)
 
 ### Treść zadania
@@ -100,11 +224,34 @@ obraz g3 = g ∗ h3:
 
 ![g3](zad14/g3_g_conv_h3.png)
 
-Interpretacja wyników:
-- obraz g1 jest wygładzony (filtr h1 to filtr dolnoprzepustowy),
-- obraz g2 uwypukla poziome krawędzie (filtr h2 to filtr gradientowy w poziomie),
-- obraz g3 jest cały czarny, ponieważ jądro h3 ma sumę elementów równą zero (filtr h3 jest kombinacją filtra dolnoprzepustowego i gradientowego, co prowadzi do zaniku sygnału stałego).
-- najłatwiej znaleźć księżyc na obrazie g2, ponieważ uwypuklone krawędzie w innym księżycu są przeciwnych kolorów co do pozostałych księżyców.
+**Szczegóły obliczeń:**
+
+Filtr uśredniający h₁ to macierz 3×3 samych jedynek (bez normalizacji przez 9):
+```
+h₁ = ⎡1 1 1⎤
+     ⎢1 1 1⎥
+     ⎣1 1 1⎦
+```
+
+Filtr gradientowy h₂ to poziomy wektor 1×3:
+```
+h₂ = [0  1  -1]
+```
+
+Splot h₃ = h₁ ∗ h₂ obliczany jest jako pełny splot 2D (mode='full'). Dla macierzy 3×3 i 1×3 wynik ma rozmiar (3+1-1)×(3+3-1) = 3×5:
+```
+h₃ = ⎡0  1  0  0  -1⎤
+     ⎢0  1  0  0  -1⎥
+     ⎣0  1  0  0  -1⎦
+```
+
+Ten wynik pokazuje strukturę detektora krawędzi pionowych: kolumna jedynek, kolumny zer pośrodku, i kolumna minus jedynek. To odpowiada różnicy między kolumnami odległymi o 3 piksele.
+
+**Interpretacja wyników:**
+- Obraz g₁ jest wygładzony przez sumowanie 9 sąsiednich pikseli (filtr h₁ to filtr dolnoprzepustowy bez normalizacji).
+- Obraz g₂ uwypukla pionowe krawędzie (filtr h₂ to gradient poziomy stosowany do wygładzonego obrazu).
+- Obraz g₃ jest identyczny z g₂, co potwierdza łączność splotu: g ∗ (h₁ ∗ h₂) = (g ∗ h₁) ∗ h₂ = g₂. Statystyki są identyczne: zakres [-639, 637], średnia ≈0, odchylenie standardowe 67.72.
+- Najłatwiej znaleźć nietypowy księżyc na obrazach g₂ i g₃, ponieważ uwypuklone krawędzie w "innym" księżycu mają przeciwny kontrast w porównaniu do pozostałych księżyców.
 
 ## 20. Znajdywanie krawędzi w obrazie ⋆ (0.5 + 0.5 + 0.5)
 

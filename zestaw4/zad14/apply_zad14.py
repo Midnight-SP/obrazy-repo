@@ -62,7 +62,7 @@ def main():
     g = load_image(img_path)
 
     # define kernels
-    h1 = np.ones((3,3), dtype=np.float32) / 9.0
+    h1 = np.ones((3,3), dtype=np.float32)  # 3x3 averaging (unnormalized)
     h2 = np.array([[0, 1, -1]], dtype=np.float32)  # 1x3 horizontal
 
     conv = convolve2d
@@ -75,8 +75,29 @@ def main():
     g2 = conv(g1, h2)
     save_uint8(g2, os.path.join(out_dir, 'g2_g1_conv_h2.png'))
 
-    # h3 = h1 * h2 (convolution of kernels). We convolve h1 with h2 as 2D conv
-    h3 = conv(h1, h2)
+    # h3 = h1 * h2 (convolution of kernels). Use FULL convolution to get true result size
+    # h1 is 3x3, h2 is 1x3 horizontal [0,1,-1]
+    # For full 2D convolution: h1(3x3) * h2(1x3) -> result is (3+1-1)x(3+3-1) = 3x5
+    
+    try:
+        from scipy.signal import convolve2d as conv_full
+        h3 = conv_full(h1, h2, mode='full')
+    except:
+        # fallback: manual full convolution
+        kh1, kw1 = h1.shape
+        kh2, kw2 = h2.shape
+        out_h = kh1 + kh2 - 1
+        out_w = kw1 + kw2 - 1
+        h3 = np.zeros((out_h, out_w), dtype=np.float32)
+        for i in range(out_h):
+            for j in range(out_w):
+                for ki in range(kh2):
+                    for kj in range(kw2):
+                        i1 = i - ki
+                        j1 = j - kj
+                        if 0 <= i1 < kh1 and 0 <= j1 < kw1:
+                            h3[i,j] += h1[i1,j1] * h2[ki,kj]
+    
     # print kernel values for debugging
     np.set_printoptions(precision=6, suppress=True)
     print('h3 kernel (raw):')
